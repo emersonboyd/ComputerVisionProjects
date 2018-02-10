@@ -1,0 +1,33 @@
+function [C] = CMatrix(verticalPrewitt, horizontalPrewitt, It)
+%UNTITLED5 Summary of this function goes here
+%   Detailed explanation goes here
+verticalHorizontalPrewitt = verticalPrewitt .* horizontalPrewitt;
+
+verticalPrewittSquared = verticalPrewitt .* verticalPrewitt;
+
+horizontalPrewittSquared = horizontalPrewitt .* horizontalPrewitt;
+
+vertica
+boxFilterSize = 7;
+boxFilter = ones(boxFilterSize, boxFilterSize)./(boxFilterSize * boxFilterSize);
+
+boxFilterVerticalHorizontalPrewitt = imfilter(verticalHorizontalPrewitt, boxFilter);
+boxFilterVerticalPrewitt = imfilter(verticalPrewittSquared, boxFilter);
+boxFilterHorizontalPrewitt = imfilter(horizontalPrewittSquared, boxFilter);
+
+sizeMatrix = size(verticalHorizontalPrewitt);
+sizeX = sizeMatrix(1);
+sizeY = sizeMatrix(2);
+
+C = zeros(sizeX, sizeY, 2, 2);
+T = zeros(sizeX, sizeY, 2);
+for i = 1:sizeX
+    for j = 1:sizeY
+        C(i,j,:,:) = [boxFilterVerticalPrewitt(i, j) boxFilterVerticalHorizontalPrewitt(i, j);
+             boxFilterVerticalHorizontalPrewitt(i, j) boxFilterHorizontalPrewitt(i, j)];
+        T(i,j,:,:) = [
+    end
+end
+        
+end
+

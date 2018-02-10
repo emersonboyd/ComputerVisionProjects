@@ -1,0 +1,29 @@
+clc
+clear all
+
+numImages = 484;
+
+enterExitFolder = 'EnterExitCrossingPaths2cor'
+enterExitPrefix = 'EnterExitCrossingPaths2cor'
+enterExitSuffix = '.jpg'
+
+imgList=[];
+for i = 0:numImages
+    fullFileName = strcat(enterExitFolder, '/', enterExitPrefix, sprintf('%04d', i), enterExitSuffix);
+    img = imread(fullFileName);
+    
+    red = img(:,:,1); % Red channel
+    green = img(:,:,2); % Green channel
+    blue = img(:,:,3); % Blue channel
+    grayscale = (red + green + blue);
+    
+    imgList(:, :, i+1) = grayscale;
+end
+
+%rgbGaussianFilteredList = temporal1DGaussianFilter(imgList, 1.2);
+boxFilter3 = boxFilter(imgList, 3);
+boxFilter5 = boxFilter(imgList, 5);
+makeVideo(grayToRgb(boxFilter3), 'Box Filter 3');
+makeVideo(grayToRgb(boxFilter5), 'Box Filter 5');
+makeVideo(grayToRgb(imgList), 'Grayscale Original Video')
+makeVideo(rgbGaussianFilteredList, 'Gaussian Filtered Video')

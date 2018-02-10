@@ -1,0 +1,9 @@
+To run the program to blend two photos, run the script “Project_2.m”. The script takes less than 90 seconds to run with the current settings.
+
+You can change the image types (1-3) by changing the imageType variable on line 9 of Project_2.m. The first two photos of each imageType are blended together, while the rest of the photos could be used by repeating the script with the blended image.
+
+There are two thresholds that were set for a range in order to make optimal cross correlations. These values are specific to each imageType and are labeled “rThreshold” and “nccThreshold” between lines 19 and 36. If you lower the values of the rThreshold, the program will take significantly longer to run.
+
+The main algorithms are located in the files "getCorners.m" and "ransac2". "getCorners" performs calculations of the image gradient, R matrix and normalized cross correlations between two images. "getCorners" returns corrX and corrY matrices: corrX is the mapping from the x,y corner in image 1 to the x coordinate of that corner in image 2, where corrY is the same for the y coordinate of the corners in image2. "plotCorrelations" is used to visualize these corner correlations. "ransac2" performs the RANSAC algorithm to find the transformation matrix from the image 1 to the image 2. Image 1 is then warped based on the transformation given with the "warpImage" method to fall in the surface of image 2.
+
+"getCorners" and "ransac2" are then performed on the warped image 1 and the original image2 to calculate the offset in pixel values between the two images, and then the two images are blended based on this offset.

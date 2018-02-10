@@ -1,0 +1,46 @@
+function [rgbThresholdDerivativeList] = temporal1DGaussianFilter(imgList, tsigma)
+%UNTITLED2 Summary of this function goes here
+%   Detailed explanation goes here
+    imgListSize = size(imgList);
+    numImages = imgListSize(3);
+    gaussianFilteredList=zeros(size(imgList));
+    filterLength = ceil(((tsigma * 5) + 1)/2)*2 - 1;
+    
+    startImage = ceil(filterLength/2);
+    endImage = numImages - floor(filterLength/2);
+    
+    Gx = @(x) 1 / sqrt(2 * pi * (tsigma^2)) * exp(-1 * x^2 / (2 * (tsigma^2)));
+     
+    gaussianFilter = zeros(1, filterLength);
+    for i = 1:filterLength
+        x = i - ceil(filterLength/2);
+        gaussianFilter(i) = Gx(x);
+    end
+    gaussianFilterSum = sum(gaussianFilter);
+    
+    for i = startImage:endImage
+        gaussianFilteredFrame = zeros(imgListSize(1), imgListSize(2));
+        for j = 1:filterLength
+            currentFilterFrame = (i + j - (ceil(filterLength/2)));
+            gaussianFilteredFrame = gaussianFilteredFrame + (gaussianFilter(j) * imgList(:,:,currentFilterFrame));
+        end
+        gaussianFilteredList(:,:,i) = gaussianFilteredFrame / gaussianFilterSum;
+    end
+
+    threshold = 15;
+    absDerivativeList = abs(gaussianFilteredList);
+    thresholdDerivativeList = zeros(size(absDerivativeList));
+    thresholdDerivativeList(absDerivativeList > threshold) = 1;
+
+    % for i = 1:numImages+1
+    %     imshow(thresholdDerivativeList(:,:,i))
+    %     pause(1);
+    %     close all
+    % end
+
+
+    for i = 1:numImages+1
+        rgbThresholdDerivativeList(:, :, :, i) = cat(3, thresholdDerivativeList(:, :, i), thresholdDerivativeList(:, :, i), thresholdDerivativeList(:, :, i));
+    end
+end
+

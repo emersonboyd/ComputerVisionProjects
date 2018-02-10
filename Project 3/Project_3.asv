@@ -1,0 +1,53 @@
+clc
+clear all
+close all
+
+warning off; % warnings were spawning from the linsolve(A,B) calls
+
+tic
+
+imageType = 1;
+
+imageScale = 1;
+
+if (imageType == 1)
+    folderName = 'Images/toy1/';
+    fileNamePrefix = 'toys';
+    fileNameSuffix = '.gif';
+    fileNumberMin = 1;
+    fileNumberMax = 3;
+    rThreshold = 10000000;
+    nccThreshold = 1.03;
+elseif (imageType == 2)
+    folderName = 'Images/toy2/';
+    fileNamePrefix = 'toys2';
+    fileNameSuffix = '.gif';
+    fileNumberMin = 1;
+    fileNumberMax = 3;
+    rThreshold = 10000000;
+    nccThreshold = 1.05;
+end
+
+grayImgList = [];
+
+numImages = 0;
+for i = fileNumberMin:fileNumberMax
+    fullFileName = strcat(folderName, fileNamePrefix, sprintf('%d', i), fileNameSuffix); 
+    img = imread(fullFileName);
+    
+    numImages = numImages + 1;
+    rgbImgList(:, :, :, numImages) = double(img); % we need doubles so that we can perform necessary calculations later
+    grayImgList(:, :, numImages) = img;
+end
+
+gaussianFilterList = spacial2DGaussianFilter(grayImgList, 1.0);
+
+[Iy, Ix] = prewittFilter(gaussianFilterList(:,:,2));
+
+It = gaussianFilterList(:,:,2) - gaussianFilterList(:,:,1);
+
+[CMatrix, TMatrix] = CMatrix(Iy, Ix, It);
+
+[u v] = flowVector
+
+

@@ -1,0 +1,153 @@
+clc
+clear all
+close all
+
+warning off; % warnings were spawning from the linsolve(A,B) calls
+
+tic
+
+imageType = 1;
+
+imageScale = .75;
+
+if (imageType == 1)
+    folderName = 'Images/DanaHallway1/';
+    fileNamePrefix = 'DSC_0';
+    fileNameSuffix = '.JPG';
+    fileNumberMin = 281;
+    fileNumberMax = 283;
+elseif (imageType == 2)
+    folderName = 'Images/DanaHallway2/';
+    fileNamePrefix = 'DSC_0';
+    fileNameSuffix = '.JPG';
+    fileNumberMin = 285;
+    fileNumberMax = 287;
+elseif (imageType == 3)
+    folderName = 'Images/DanaOffice/';
+    fileNamePrefix = 'DSC_0';
+    fileNameSuffix = '.JPG';
+    fileNumberMin = 308;
+    fileNumberMax = 317;
+end
+
+verticalPrewittFilter = [-1 0 1;
+                         -1 0 1;
+                         -1 0 1];
+                     
+horizontalPrewittFilter = [-1 -1 -1;
+                            0 0 0;
+                            1 1 1];
+grayImgList = [];
+
+numImages = 0;
+for i = fileNumberMin:fileNumberMax
+    fullFileName = strcat(folderName, fileNamePrefix, sprintf('%3d', i), fileNameSuffix); 
+    img = imread(fullFileName);
+    
+    numImages = numImages + 1;
+    rgbImgList(:, :, :, numImages) = double(img); % we need doubles so that we can perform necessary calculations later
+    grayImgList(:, :, numImages) = rgb2gray(img);
+end
+
+grayImgList = imresize(grayImgList, imageScale);
+for i = 1:numImages
+    verticalPrewitt(:,:,i) = imfilter(grayImgList(:,:,i), verticalPrewittFilter, 'replicate');
+    horizontalPrewitt(:,:,i) = imfilter(grayImgList(:,:,i), horizontalPrewittFilter, 'replicate');
+end
+
+for i = 1:numImages
+    R(:,:,i) = CMatrix(verticalPrewitt(:,:,i), horizontalPrewitt(:,:,i));
+end
+
+magnitude = sqrt(horizontalPrewitt.^2 + verticalPrewitt.^2);
+orientation = atand(horizontalPrewitt./verticalPrewitt);
+
+threshold = 1000;
+R(R < threshold) = 0;
+R(R >= threshold) = 255;
+orientation(isnan(orientation)) = 90;
+for i = 1:numImages
+    nonMaxSuppress(:,:,i) = nonMaxSuppression(orientation(:,:,i), magnitude(:,:,i), R(:,:,i));
+end
+
+% PART III: NCC
+[corrX, corrY] = normalizedCrossCorrelation(grayImgList(:,:,1), grayImgList(:,:,2), nonMaxSuppress(:,:,1), nonMaxSuppress(:,:,2));
+
+plotCorrelations(grayImgList(:,:,1), grayImgList(:,:,2), corrX, corrY);
+
+% RANSAC
+[ roughH, roughInliersX, roughInliersY ] = ransac2(grayImgList(:,:,1), grayImgList(:,:,2), corrX, corrY);
+
+% compute a better estimate of our transform matrix now that we only have
+% inliers
+[ H, inliersX, inliersY ] = ransac2(grayImgList(:,:,1), grayImgList(:,:,2), roughInliersX, roughInliersY);
+
+figure
+plotCorrelations(grayImgList(:,:,1), grayImgList(:,:,2), inliersX, inliersY);
+
+warpedImage = warpImage(grayImgList(:,:,1), H);
+figure;
+imshow(warpedImage/255);
+% 
+% figure
+% H(3,1:2) = 0
+% tform = affine2d(transpose(H))
+% imshow(imwarp(grayImgList(:,:,1)/255, tform))
+
+timeElapsed = toc
+
+% BLENDING IMAGES TOGETHER, FINDING CORNERS FIRST
+[corrXWarped, corrYWarped] = getCorners(warpedImage, grayImgList(:,:,2));
+
+[ roughHWarped, roughInliersWarpedX, roughInliersWarpedY ] = ransac2(warpedImage, grayImgList(:,:,2), corrXWarped, corrYWarped);
+
+% compute a better estimate of our transform matrix now that we only have
+% inliers
+[ HWarped, inliersXWarped, inliersYWarped ] = ransac2(warpedImage, grayImgList(:,:,2), roughInliersWarpedX, roughInliersWarpedY);
+
+XOffset = round(abs(HWarped(1, 3)));
+YOffset = round(abs(HWarped(2, 3)));
+% H = getHomography(grayImgList(:,:,1), grayImgList(:,:,2), corrX, corrY);
+
+newWarpedImage = 
+% nccBoxFilterSize = 9;
+% nccBoxFilter = ones(nccBoxFilterSize, nccBoxFilterSize) / (nccBoxFilterSize^2);
+% totalImageSize = size(grayImgList);
+% imageWidth = totalImageSize(1);
+% imageHeight = totalImageSize(2);
+% rgbImgListSquared = rgbImgList .^ 2;
+% rgbImgListSquaredFiltered = imfilter(rgbImgListSquared, nccBoxFilter, 'replicate');
+% 
+% nccRgbImgList = zeros(size(rgbImgList));
+% 
+% for i = 1:numImages
+%     for x = 1:imageWidth
+%         for y = 1:imageHeight
+%             if (nonMaxSuppress(x, y, i) == 255)
+%                 nccRgbImgList(x, y, 1, i) = rgbImgListSquaredFiltered(x, y, 1, i);
+%                 nccRgbImgList(x, y, 2, i) = rgbImgListSquaredFiltered(x, y, 2, i);
+%                 nccRgbImgList(x, y, 3, i) = rgbImgListSquaredFiltered(x, y, 3, i);
+%             end
+%         end
+%     end
+% end
+
+%{
+
+Image 1:
+rows: 65-72
+columns: 196-200
+
+Image 2:
+Actual
+rows:57-64
+columns:80-85
+Correlation
+rows:63-70
+columns:85-89
+
+imshow(nonMaxSuppress(65:72,196:200,1)) % shows the original corner
+imshow(nonMaxSuppress(57:64,80:85,2)) % shows the corner, so the mapping from 1 to 2 is good for nonmaxsuppress
+imshow(nonMaxSuppress(63:70,85:89,2)) % does not show the corner
+
+%}

@@ -1,0 +1,30 @@
+function [boxFilterList] = boxFilter(imgList,boxSize)
+%UNTITLED4 Summary of this function goes here
+%   Detailed explanation goes here
+    imgListSize = size(imgList);
+    xDir = imgListSize(2);
+    yDir = imgListSize(1);
+    zDir = imgListSize(3);
+    startPixel = boxSize - floor(boxSize/2);
+    
+    boxFilterList = imgList;
+    
+    for i = startPixel:xDir
+        for j = startPixel:yDir
+            for k = 1:zDir
+                for l = 1:boxSize
+                    for m = 1
+                filteredImage(i,j,k) = (noiseImages(i-1,j-1,k) + ...
+                                       noiseImages(i,j-1,k) + ...
+                                       noiseImages(i+1,j-1,k) + ...
+                                       noiseImages(i-1,j,k) + ...
+                                       noiseImages(i,j,k) + ...
+                                       noiseImages(i+1,j,k) + ...
+                                       noiseImages(i-1,j+1,k) + ...
+                                       noiseImages(i,j+1,k) + ...
+                                       noiseImages(i+1,j+1,k))/9;
+            end
+        end
+    end
+end
+

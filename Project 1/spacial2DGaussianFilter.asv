@@ -1,0 +1,37 @@
+function [gaussianFilterList] = spacial2DGaussianFilter(imgList, ssigma)
+%UNTITLED5 Summary of this function goes here
+%   Detailed explanation goes here
+    Gx = @(x) 1 / sqrt(2 * pi * (tsigma^2)) * exp(-1 * x^2 / (2 * (tsigma^2)));
+    Gy = @(y) 1 / sqrt(2 * pi * (tsigma^2)) * exp(-1 * y^2 / (2 * (tsigma^2)));
+    imgListSize = size(imgList);
+    xDir = imgListSize(2);
+    yDir = imgListSize(1);
+    zDir = imgListSize(3);
+    boxSize = ceil(((tsigma * 5) + 1)/2)*2 - 1;
+    startPixel = boxSize - floor(boxSize/2);
+    endPixelX = xDir - floor(boxSize/2);
+    endPixelY = yDir - floor(boxSize/2);
+    boxFilterList = imgList;
+    
+    gaussianFilterHorizontal = zeros(1, boxSize);
+    for i = 1:boxSize
+        x = i - ceil(boxSize/2);
+        gaussianFilterHorizontal(i) = Gx(x);
+    end
+    gaussianFilterVertical = transpose(gaussianFilterHorizontal);
+    gaussianFilterSum = sum(gaussianFilterHorizontal);
+    
+    
+    for i = startPixel:endPixelX
+        for j = startPixel:endPixelY
+            for k = 1:zDir
+                pixelValue = 0;
+                for l = 1:boxSize
+                    pixelValue = pixelValue + imgList((j + m - (ceil(boxSize/2))), (i + l - (ceil(boxSize/2))), k);
+                end
+                boxFilterList(j,i,k) = pixelValue/(boxSize^2);
+            end
+        end
+    end
+end
+

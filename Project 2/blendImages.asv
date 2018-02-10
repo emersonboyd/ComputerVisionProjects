@@ -1,0 +1,40 @@
+function [newImage] = blendImages(image1, image2, XOffset, YOffset)
+%UNTITLED3 Summary of this function goes here
+%   Detailed explanation goes here
+    sizeImage1 = size(image1);
+    sizeImage1X = sizeImage1(1);
+    sizeImage1Y = sizeImage1(2);
+    sizeImage2 = size(image2);
+    sizeImage2X = sizeImage2(1);
+    sizeImage2Y = sizeImage2(2);
+    
+    maxX = max(sizeImage1X, sizeImage2X);
+    maxY = max(sizeImage1Y, sizeImage2Y);
+    
+    newWarpedImageX = sizeImage1X + XOffset;
+    newWarpedImageY = sizeImage1Y + YOffset;
+    newWarpedImage = zeros(sizeImage1X + XOffset, sizeImage1Y + YOffset);
+    
+    newImage = zeros(maxX, maxY);
+    
+    for i = 1:sizeImage1X
+        for j = 1:sizeImage1Y            
+            newWarpedImage(i + XOffset, j + YOffset) = image1(i, j);
+        end
+    end    
+    
+    for k = 1:maxX
+        for l = 1:maxY
+            if (isNan(newWarpedImage(k,l)) && isNan(image2(k,l)))
+                newImage(k, l) = 0;
+            elseif (isNan(newWarpedImage(k,l)))
+                newImage(k, l) = image2(k,l);
+            elseif (isNan(image2(k,l)))
+                newImage(k, l) = newWarpedImage(k,l)
+            else
+                newImage(k, l) = (newWarpedImage(k,l) + image2(k,l))/2;
+            end
+        end
+    end
+end
+

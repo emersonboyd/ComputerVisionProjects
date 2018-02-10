@@ -1,0 +1,6 @@
+
+folderNamePrefix = "DSC_"
+folderNameSuffix = ".JPG"
+
+for i = 281:283
+    imread(folderNamePrefix + i + fol
